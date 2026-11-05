@@ -1,0 +1,247 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAYMENT_CONFIRMED
+  ORDER_CONFIRMED
+  PROCESSING
+  READY_FOR_DISPATCH
+  SHIPPED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+enum PayStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+// All money is Int in minor units (kobo).
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  name String
+  phone String?
+  passwordHash String
+  role Role @default(CUSTOMER)
+  suspended Boolean @default(false)
+  createdAt DateTime @default(now())
+  addresses Address[]
+  orders Order[]
+  cart Cart?
+}
+model Address {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields:[userId],references:[id])
+  line1 String
+  country String
+  state String
+  city String
+  lga String?
+  postcode String?
+}
+model Category {
+  id String @id @default(cuid())
+  name String
+  slug String @unique
+  description String?
+  imageUrl String?
+  sort Int @default(0)
+  active Boolean @default(true)
+  parentId String?
+  parent Category? @relation("Sub",fields:[parentId],references:[id])
+  children Category[] @relation("Sub")
+  products Product[]
+}
+model Product {
+  id String @id @default(cuid())
+  name String
+  slug String @unique
+  sku String? @unique
+  description String
+  brand String?
+  model String?
+  price Int
+  comparePrice Int?
+  stock Int @default(0)
+  featured Boolean @default(false)
+  bestSeller Boolean @default(false)
+  active Boolean @default(true)
+  isDemo Boolean @default(false)
+  specs Json?
+  warranty String?
+  createdAt DateTime @default(now())
+  categoryId String
+  category Category @relation(fields:[categoryId],references:[id])
+  images ProductImage[]
+  variants Variant[]
+  reviews Review[]
+  @@index([categoryId])
+  @@index([name])
+}
+model ProductImage {
+  id String @id @default(cuid())
+  productId String
+  product Product @relation(fields:[productId],references:[id],onDelete:Cascade)
+  url String
+  alt String?
+  sort Int @default(0)
+}
+model Variant {
+  id String @id @default(cuid())
+  productId String
+  product Product @relation(fields:[productId],references:[id],onDelete:Cascade)
+  label String
+  sku String? @unique
+  priceDelta Int @default(0)
+  stock Int @default(0)
+}
+model Review {
+  id String @id @default(cuid())
+  productId String
+  product Product @relation(fields:[productId],references:[id])
+  rating Int
+  body String?
+  verifiedOrderId String?
+  approved Boolean @default(false)
+}
+model Cart {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields:[userId],references:[id])
+  items CartItem[]
+}
+model CartItem {
+  id String @id @default(cuid())
+  cartId String
+  cart Cart @relation(fields:[cartId],references:[id],onDelete:Cascade)
+  productId String
+  variantId String?
+  qty Int
+}
+model DeliveryZone {
+  id String @id @default(cuid())
+  name String
+  country String @default("NG")
+  state String?
+  city String?
+  lga String?
+  postcode String?
+  fee Int
+  etaMinDays Int
+  etaMaxDays Int
+  sameDay Boolean @default(false)
+  express Boolean @default(false)
+  expressFee Int?
+  freeOver Int?
+  active Boolean @default(true)
+}
+model Coupon {
+  id String @id @default(cuid())
+  code String @unique
+  percentOff Int?
+  amountOff Int?
+  minOrder Int?
+  startsAt DateTime?
+  expiresAt DateTime?
+  maxUses Int?
+  used Int @default(0)
+  active Boolean @default(true)
+  productIds String[]
+  categoryIds String[]
+}
+model Order {
+  id String @id @default(cuid())
+  ref String @unique
+  accessToken String @unique
+  userId String?
+  user User? @relation(fields:[userId],references:[id])
+  status OrderStatus @default(PENDING_PAYMENT)
+  name String
+  email String
+  phone String
+  address Json
+  subtotal Int
+  discount Int @default(0)
+  deliveryFee Int
+  total Int
+  currency String @default("NGN")
+  couponCode String?
+  zoneName String?
+  etaFrom DateTime?
+  etaTo DateTime?
+  courier String?
+  trackingNo String?
+  dispatchedAt DateTime?
+  notes String?
+  createdAt DateTime @default(now())
+  items OrderItem[]
+  payments Payment[]
+  history StatusHistory[]
+  @@index([email])
+  @@index([status])
+}
+model OrderItem {
+  id String @id @default(cuid())
+  orderId String
+  order Order @relation(fields:[orderId],references:[id])
+  productId String?
+  nameSnapshot String
+  unitPrice Int
+  qty Int
+}
+model Payment {
+  id String @id @default(cuid())
+  orderId String
+  order Order @relation(fields:[orderId],references:[id])
+  provider String
+  reference String @unique
+  status PayStatus @default(PENDING)
+  amount Int
+  rawEventIds String[]
+  verifiedAt DateTime?
+}
+model StatusHistory {
+  id String @id @default(cuid())
+  orderId String
+  order Order @relation(fields:[orderId],references:[id])
+  status OrderStatus
+  note String?
+  actorId String?
+  at DateTime @default(now())
+}
+model Notification {
+  id String @id @default(cuid())
+  channel String
+  to String
+  subject String?
+  body String
+  sentAt DateTime?
+  error String?
+}
+model AuditLog {
+  id String @id @default(cuid())
+  actorId String
+  action String
+  target String?
+  at DateTime @default(now())
+}
+model Setting {
+  key String @id
+  value Json
+}

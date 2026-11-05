@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Double J Tele World</title>
+<style>
+:root{--bk:#0B0B0B;--gold:#D4AF37;--dg:#B8860B;--gr:#808080;--lg:#F2F2F2;--wh:#fff;--bg:#F2F2F2;--card:#fff;--tx:#0B0B0B;--bd:#ddd;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#151515;--card:#1f1f1f;--tx:#f2f2f2;--bd:#333}}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--tx)}
+header{background:var(--bk);color:#fff;padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.logo{font-weight:800;letter-spacing:.5px;font-size:18px}.logo b{color:var(--gold)}
+header input{flex:1;min-width:140px;padding:10px;border-radius:8px;border:0;font-size:16px}
+button{cursor:pointer;font:inherit}
+.btn{background:var(--gold);color:var(--bk);border:0;border-radius:8px;padding:10px 14px;font-weight:700;min-height:44px}
+.btn:hover{background:var(--dg);color:#fff}.btn:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--dg);outline-offset:2px}
+.btn.ghost{background:transparent;color:#fff;border:1px solid var(--gold)}
+.hero{background:var(--bk);color:#fff;padding:36px 16px;text-align:center}
+.hero h1{margin:0 0 8px;font-size:clamp(24px,6vw,40px)}.hero h1 span{color:var(--gold)}.hero p{color:#bbb;margin:0 0 16px}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.bar select{padding:10px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.img{aspect-ratio:1;border-radius:8px;background:var(--lg);display:grid;place-items:center;font-size:44px}
+.tag{font-size:12px;color:var(--gr)}.price{color:var(--dg);font-weight:800}.old{color:var(--gr);text-decoration:line-through;font-size:13px;margin-left:6px;font-weight:400}
+.badge{background:var(--gold);color:var(--bk);font-size:11px;font-weight:700;border-radius:99px;padding:2px 8px;align-self:flex-start}
+.empty{padding:30px;text-align:center;color:var(--gr)}
+#drawer{position:fixed;inset:0 0 0 auto;width:min(420px,100%);background:var(--card);color:var(--tx);transform:translateX(100%);transition:transform .2s;z-index:10;display:flex;flex-direction:column;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px));overflow-y:auto;box-shadow:-4px 0 20px #0006}
+#drawer.open{transform:none}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd)}
+.qty button{width:32px;height:32px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:6px}
+select,.drawer-in{width:100%;padding:10px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:16px}
+.note{font-size:13px;color:var(--gr);margin:8px 0}.warn{color:#b00020}
+footer{background:var(--bk);color:#aaa;padding:20px 16px;font-size:13px;text-align:center;margin-top:24px}
+.demo{background:var(--gold);color:var(--bk);text-align:center;font-size:13px;padding:6px}
+</style></head><body>
+<div class="demo">Storefront preview · demo products and sample delivery rules only · no real payments</div>
+<header><span class="logo">DOUBLE J <b>TELE WORLD</b></span>
+<input id="q" type="search" placeholder="Search phones, laptops, brands…" aria-label="Search products">
+<button class="btn" id="cartBtn" aria-label="Open cart">Cart (<span id="cnt">0</span>)</button></header>
+<section class="hero"><h1>Premium electronics, <span>delivered</span>.</h1><p>Phones, laptops, audio and accessories.</p><a href="#shop"><button class="btn">Shop Now</button></a></section>
+<main class="wrap" id="shop">
+<div class="bar"><select id="cat" aria-label="Category"></select><select id="stock" aria-label="Availability"><option value="">All stock</option><option value="in">In stock only</option></select>
+<select id="sort" aria-label="Sort"><option value="new">Newest</option><option value="pa">Price: low to high</option><option value="pd">Price: high to low</option><option value="name">Name</option></select></div>
+<div class="grid" id="grid"></div></main>
+<footer>© Double J Tele World · Policies and contact details are set in the admin dashboard.</footer>
+<aside id="drawer" aria-label="Shopping cart"><div class="row"><b>Your cart</b><button class="btn" id="close">Close</button></div>
+<div id="items"></div>
+<label class="note" for="zone">Delivery location</label>
+<select id="zone"></select>
+<div id="dinfo" class="note"></div>
+<div class="row"><span>Subtotal</span><b id="sub">₦0</b></div>
+<div class="row"><span>Delivery</span><b id="del">—</b></div>
+<div class="row"><span>Total</span><b class="price" id="tot">₦0</b></div>
+<button class="btn" id="pay" style="margin-top:12px">Checkout</button><div id="msg" class="note"></div></aside>
+<script>
+const PRODUCTS=[
+{id:1,n:"Demo Smartphone A",c:"Smartphones",p:450000,o:520000,s:12,e:"📱",d:6},
+{id:2,n:"Demo Smartphone B",c:"Smartphones",p:320000,s:5,e:"📱",d:5},
+{id:3,n:"Demo Laptop 15\"",c:"Laptops and Computers",p:780000,s:3,e:"💻",d:4},
+{id:4,n:"Demo Tablet 10\"",c:"Tablets",p:210000,o:240000,s:0,e:"📟",d:3},
+{id:5,n:"Demo Wireless Earbuds",c:"Earphones and Headphones",p:35000,s:40,e:"🎧",d:2},
+{id:6,n:"Demo Fast Charger",c:"Chargers and Cables",p:9500,s:80,e:"🔌",d:1},
+{id:7,n:"Demo Smartwatch",c:"Smartwatches",p:68000,s:9,e:"⌚",d:7},
+{id:8,n:"Demo Bluetooth Speaker",c:"Speakers and Audio",p:42000,s:15,e:"🔊",d:8}];
+// Sample zones. In the real app these come from the database and are edited in /admin.
+const ZONES=[{k:"ikeja",n:"Lagos – Ikeja",fee:200000,eta:"Same day / next day",free:5000000},
+{k:"lekki",n:"Lagos – Lekki",fee:350000,eta:"1–2 business days",free:5000000},
+{k:"other",n:"Other Nigerian states",fee:600000,eta:"3–7 business days",free:null}];
+const fmt=k=>"₦"+(k/100).toLocaleString("en-NG");
+let cart={},zone="";
+try{cart=JSON.parse(localStorage.getItem("djtw")||"{}")}catch(e){}
+const save=()=>{try{localStorage.setItem("djtw",JSON.stringify(cart))}catch(e){}};
+const $=i=>document.getElementById(i);
+$("cat").innerHTML='<option value="">All categories</option>'+[...new Set(PRODUCTS.map(p=>p.c))].map(c=>`<option>${c}</option>`).join("");
+$("zone").innerHTML='<option value="">Select location…</option>'+ZONES.map(z=>`<option value="${z.k}">${z.n}</option>`).join("")+'<option value="x">My location is not listed</option>';
+function render(){
+ const q=$("q").value.toLowerCase(),c=$("cat").value,st=$("stock").value,so=$("sort").value;
+ let l=PRODUCTS.filter(p=>(!q||(p.n+p.c).toLowerCase().includes(q))&&(!c||p.c==c)&&(!st||p.s>0));
+ l.sort((a,b)=>so=="pa"?a.p-b.p:so=="pd"?b.p-a.p:so=="name"?a.n.localeCompare(b.n):b.d-a.d);
+ $("grid").innerHTML=l.length?l.map(p=>`<article class="card"><div class="img" role="img" aria-label="${p.n}">${p.e}</div>${p.o?'<span class="badge">Sale</span>':''}<b>${p.n}</b><span class="tag">${p.c} · ${p.s>0?p.s+" in stock":"Out of stock"}</span><span class="price">${fmt(p.p*100)}${p.o?`<span class="old">${fmt(p.o*100)}</span>`:""}</span><button class="btn" data-a="${p.id}" ${p.s?"":"disabled"}>${p.s?"Add to Cart":"Unavailable"}</button></article>`).join(""):'<div class="empty">No products match your search.</div>';
+}
+function cartView(){
+ const ids=Object.keys(cart);let sub=0,n=0;
+ $("items").innerHTML=ids.length?ids.map(id=>{const p=PRODUCTS.find(x=>x.id==id);if(!p)return"";const q=cart[id];sub+=p.p*100*q;n+=q;
+ return `<div class="row"><div><b>${p.n}</b><div class="tag">${fmt(p.p*100)} each</div></div><div class="qty"><button data-m="${id}" aria-label="Decrease">−</button> ${q} <button data-pl="${id}" aria-label="Increase">+</button></div></div>`}).join(""):'<div class="empty">Your cart is empty.</div>';
+ const z=ZONES.find(z=>z.k==zone);let fee=null;
+ if(z){fee=z.free&&sub>=z.free?0:z.fee;$("dinfo").className="note";$("dinfo").textContent="Estimated delivery: "+z.eta+(z.free?` · Free over ${fmt(z.free)}`:"")}
+ else if(zone=="x"){$("dinfo").className="note warn";$("dinfo").textContent="We don’t have a delivery price for this location yet. Delivery availability must be confirmed before ordering."}
+ else $("dinfo").textContent="Choose a location to see the delivery fee and estimate.";
+ $("cnt").textContent=n;$("sub").textContent=fmt(sub);$("del").textContent=fee==null?"—":fee===0?"Free":fmt(fee);$("tot").textContent=fmt(sub+(fee||0));
+}
+document.addEventListener("click",e=>{const t=e.target;
+ if(t.dataset.a){cart[t.dataset.a]=Math.min((cart[t.dataset.a]||0)+1,PRODUCTS.find(p=>p.id==t.dataset.a).s);save();cartView();$("drawer").classList.add("open")}
+ if(t.dataset.pl){const p=PRODUCTS.find(x=>x.id==t.dataset.pl);cart[p.id]=Math.min(cart[p.id]+1,p.s);save();cartView()}
+ if(t.dataset.m){if(--cart[t.dataset.m]<1)delete cart[t.dataset.m];save();cartView()}});
+$("cartBtn").onclick=()=>$("drawer").classList.add("open");$("close").onclick=()=>$("drawer").classList.remove("open");
+$("zone").onchange=e=>{zone=e.target.value;cartView()};
+$("pay").onclick=()=>{$("msg").textContent=!Object.keys(cart).length?"Add an item first.":!ZONES.find(z=>z.k==zone)?"Select a supported delivery location first.":"Preview only: no payment gateway is connected. In the full app, checkout creates a server-verified order and a Paystack/Flutterwave payment."};
+["q","cat","stock","sort"].forEach(i=>$(i).addEventListener("input",render));
+render();cartView();
+</script></body></html>
